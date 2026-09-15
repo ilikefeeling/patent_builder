@@ -1,0 +1,6 @@
+{
+  "name": "특허초안 생성기 PRO",
+  "description": "생성형 AI 기반 특허 청구항 자동 생성 및 뒷받침 실시간 검증 시스템",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
