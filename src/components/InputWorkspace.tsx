@@ -42,7 +42,7 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
   onShowToast,
 }) => {
   const [isAccordionOpen, setIsAccordionOpen] = useState(true);
-  const [q2Option, setQ2Option] = useState('SVG 렌더링 + PlantUML 다중 지원');
+  const [q2Option, setQ2Option] = useState('');
   const handleManualSave = () => {
     onShowToast('작성 중인 특허 초안 정보가 저장되었습니다.', 'success');
   };
@@ -329,15 +329,26 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
           <div className="relative z-10 space-y-3">
             <div className="p-3 bg-white/95 backdrop-blur-md rounded-lg shadow-sm border border-white/20">
               <div className="flex items-start justify-between gap-2">
-                <span className="font-['JetBrains_Mono'] text-[10px] px-1.5 py-0.5 rounded bg-[#002113] text-[#009668] font-bold">Q1 완료</span>
-                <CheckCircle2 className="w-4 h-4 text-[#009668]" />
+                {project.q1Answer.trim().length > 0 ? (
+                  <>
+                    <span className="font-['JetBrains_Mono'] text-[10px] px-1.5 py-0.5 rounded bg-[#002113] text-[#009668] font-bold">Q1 완료</span>
+                    <CheckCircle2 className="w-4 h-4 text-[#009668]" />
+                  </>
+                ) : (
+                  <span className="font-['JetBrains_Mono'] text-[10px] px-1.5 py-0.5 rounded bg-[#d0e1fb] text-[#0b1c30] font-bold">Q1 응답 대기</span>
+                )}
               </div>
               <p className="font-['Public_Sans'] text-[13px] text-[#181b25] font-medium mt-1">
                 도면부호 매칭은 로컬 브라우저(Client-side WASM)에서 수행됩니까, 아니면 백엔드 API에서 처리됩니까?
               </p>
-              <div className="mt-2 p-2 bg-[#f1f3ff] rounded text-[#181b25] font-['JetBrains_Mono'] text-[11px] flex items-center gap-1.5">
-                <CornerDownRight className="w-3.5 h-3.5 text-[#505f76] shrink-0" />
-                <span className="font-medium text-[#181b25]">{project.q1Answer}</span>
+              <div className="mt-2">
+                <input
+                  type="text"
+                  className="w-full px-2.5 py-1.5 rounded bg-[#f1f3ff] text-[#181b25] font-['Public_Sans'] text-[12px] outline-none focus:bg-white border border-[#dfe2ef] focus:border-[#131b2e]"
+                  placeholder="답변을 입력하세요..."
+                  value={project.q1Answer}
+                  onChange={(e) => onUpdateProject({ q1Answer: e.target.value })}
+                />
               </div>
             </div>
 

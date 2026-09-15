@@ -13,6 +13,7 @@ import {
   Send,
   Loader2,
   ExternalLink,
+  FilePlus,
 } from 'lucide-react';
 import { PatentProject } from '../types';
 
@@ -21,6 +22,7 @@ interface ExportHistoryProps {
   onOpenDiff: () => void;
   onOpenConsult: () => void;
   onRestoreVersion: (v: string) => void;
+  onResetProject: () => void;
   onShowToast: (msg: string, type?: 'success' | 'info' | 'warning' | 'download') => void;
 }
 
@@ -29,6 +31,7 @@ export const ExportHistory: React.FC<ExportHistoryProps> = ({
   onOpenDiff,
   onOpenConsult,
   onRestoreVersion,
+  onResetProject,
   onShowToast,
 }) => {
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
@@ -516,6 +519,18 @@ export const ExportHistory: React.FC<ExportHistoryProps> = ({
             <span>변리사 매칭 및 데이터 전송</span>
           </button>
         </div>
+      </section>
+
+      {/* Reset Project Button */}
+      <section className="pt-2">
+        <button
+          type="button"
+          onClick={onResetProject}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-white border border-[#e5e8f5] text-[#181b25] font-['Public_Sans'] text-[14px] font-bold hover:bg-[#f1f3ff] hover:border-[#131b2e] transition-all shadow-sm"
+        >
+          <FilePlus className="w-4 h-4 text-[#505f76]" />
+          <span>신규 특허 문서 작성하기</span>
+        </button>
       </section>
     </div>
   );

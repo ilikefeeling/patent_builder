@@ -22,22 +22,19 @@ export default function App() {
 
   const [project, setProject] = useState<PatentProject>({
     docId: 'DOC-KR-2025-0489',
-    title: '생성형 AI 기반 특허 청구항 자동 생성 및 뒷받침 실시간 검증 시스템',
-    applicant: '주식회사 센서랩스',
-    ipcClass: 'G06F 40/00',
-    kipoScore: 98,
-    version: 'v3.2',
+    title: '',
+    applicant: '',
+    ipcClass: '',
+    kipoScore: 0,
+    version: 'v1.0',
     lastSavedText: '방금 전',
-    problemPurpose:
-      '종래 특허 출원서 작성 시 청구항과 명세서 본문 간의 용어 불일치로 인한 거절이유 통지(특허법 제42조 제4항 위반)가 빈번하게 발생하는 문제점을 해결하고, 청구항 간 종속 관계 및 도면부호 매핑 결함을 실시간으로 파악하여 출원 지연 비용을 최소화함.',
-    techField:
-      'Legaltech SaaS, 변리사 실무 보조 도구, 기업 R&D 연구원의 신규 직무발명신고서 작성 및 청구범위 시뮬레이터',
-    keyComponents:
-      '도면부호 자동 레지스트리 생성부(110), 실시간 선행사 매칭 엔진(120), 4-단계 순차 파이프라인(130), 클레임 트리 그래프 렌더러(140)',
-    priorArt: '공개특허 10-2022-XXXXXXX (자연어 처리 기반 명세서 분석기)',
-    q1Answer: '클라이언트 측 WebWorker에서 실시간 AST 파싱 수행',
-    q2Selected: 'SVG 렌더링 + PlantUML 다중 지원',
-    q2Custom: 'PlantUML 및 SVG 벡터 출력 동시 지원 (청구항 구조도 시각화용)',
+    problemPurpose: '',
+    techField: '',
+    keyComponents: '',
+    priorArt: '',
+    q1Answer: '',
+    q2Selected: '',
+    q2Custom: '',
     isClaim2Fixed: false,
     aiModel: 'Claude 3.5 Sonnet (Pro)',
     apiKey: '',
@@ -86,6 +83,30 @@ export default function App() {
       }));
       showToast('명세서가 v1.0 상태로 복원되었습니다.', 'info');
     }
+  };
+
+  const handleResetProject = () => {
+    setProject({
+      docId: `DOC-KR-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`,
+      title: '',
+      applicant: '',
+      ipcClass: '',
+      kipoScore: 0,
+      version: 'v1.0',
+      lastSavedText: '방금 전',
+      problemPurpose: '',
+      techField: '',
+      keyComponents: '',
+      priorArt: '',
+      q1Answer: '',
+      q2Selected: '',
+      q2Custom: '',
+      isClaim2Fixed: false,
+      aiModel: 'Claude 3.5 Sonnet (Pro)',
+      apiKey: project.apiKey,
+    });
+    setCurrentTab('input');
+    showToast('새로운 특허 초안 작성을 시작합니다.', 'info');
   };
 
   return (
@@ -168,6 +189,7 @@ export default function App() {
             onOpenDiff={() => setIsDiffOpen(true)}
             onOpenConsult={() => setIsConsultOpen(true)}
             onRestoreVersion={handleRestoreVersion}
+            onResetProject={handleResetProject}
             onShowToast={showToast}
           />
         )}
