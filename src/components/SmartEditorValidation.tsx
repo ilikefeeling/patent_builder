@@ -59,7 +59,7 @@ export const SmartEditorValidation: React.FC<SmartEditorValidationProps> = ({
   const allPassed = project.isClaim2Fixed;
 
   return (
-    <div className="flex flex-col w-full px-4 pt-4 pb-36 space-y-4 max-w-2xl mx-auto">
+    <div className="flex flex-col w-full px-4 md:px-8 xl:px-12 pt-4 pb-36 md:pb-12 space-y-4 max-w-[1600px] 2xl:max-w-[1800px] mx-auto">
       {/* Live KIPO Claim Verification Header Banner */}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
@@ -178,10 +178,12 @@ export const SmartEditorValidation: React.FC<SmartEditorValidationProps> = ({
         </span>
       </div>
 
-      {/* Main Claim Cards Container */}
-      <div className="flex flex-col gap-3.5">
-        {/* Claim 1: Independent Claim */}
-        <div className="p-4 rounded-xl bg-white border border-[#e5e8f5] shadow-sm flex flex-col gap-2.5 transition-all hover:shadow-md">
+      {/* Grid Layout for Desktop */}
+      <div className="flex flex-col md:grid md:grid-cols-[6fr_4fr] md:gap-8 gap-6">
+        {/* Left Column: Main Editor/Claims */}
+        <div className="flex flex-col gap-3.5">
+          {/* Claim 1: Independent Claim */}
+          <section className="bg-white rounded-xl border-2 border-[#d2d6ea] shadow-sm flex flex-col h-full overflow-hidden transition-shadow focus-within:ring-2 focus-within:ring-[#131b2e] focus-within:border-transparent p-4 gap-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <span className="px-2 py-0.5 rounded bg-[#131b2e] text-[#bec6e0] font-['JetBrains_Mono'] text-[10px] font-bold uppercase">
@@ -235,7 +237,7 @@ export const SmartEditorValidation: React.FC<SmartEditorValidationProps> = ({
               <span>수정</span>
             </button>
           </div>
-        </div>
+        </section>
 
         {/* Claim 2: Dependent Claim */}
         <div className="p-4 rounded-xl bg-white border border-[#e5e8f5] shadow-sm flex flex-col gap-2.5 transition-all hover:shadow-md">
@@ -365,8 +367,10 @@ export const SmartEditorValidation: React.FC<SmartEditorValidationProps> = ({
         </div>
       </div>
 
-      {/* Visual Drawing Preview Thumbnail Card */}
-      <div className="p-4 rounded-xl bg-[#f1f3ff] border border-[#ebedfb] flex items-center justify-between gap-3">
+      {/* Right Column: Validation & Previews */}
+      <div className="flex flex-col gap-4">
+          {/* Visual Drawing Preview Thumbnail Card */}
+          <div className="p-4 rounded-xl bg-[#f1f3ff] border border-[#ebedfb] flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-12 h-12 rounded-lg bg-[#dfe2ef] flex items-center justify-center shrink-0 border border-[#c6c6cd]/50">
             <svg className="w-8 h-8 text-[#505f76]" fill="none" viewBox="0 0 40 40">
@@ -513,6 +517,8 @@ export const SmartEditorValidation: React.FC<SmartEditorValidationProps> = ({
             </div>
           </div>
         )}
+      </div>
+        </div>
       </div>
 
       {/* Bottom Interactive Action Dock */}

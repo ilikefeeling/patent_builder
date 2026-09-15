@@ -48,7 +48,7 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full px-4 pt-4 pb-36 max-w-2xl mx-auto">
+    <div className="flex flex-col w-full px-4 md:px-8 xl:px-12 pt-4 pb-36 md:pb-12 max-w-[1600px] 2xl:max-w-[1800px] mx-auto">
       {/* Top Status Bar */}
       <section className="flex items-center justify-between gap-2 px-1 mb-6">
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#dfe2ef] text-[#505f76] font-['JetBrains_Mono'] text-[11px] font-semibold">
@@ -64,8 +64,12 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
         </button>
       </section>
 
-      {/* 1. API Key & Model Selection */}
-      <section className="mb-6">
+      {/* Grid Layout for Desktop */}
+      <div className="flex flex-col md:grid md:grid-cols-[6fr_4fr] md:gap-8 gap-6">
+        {/* Left Column: Core Inputs */}
+        <div className="flex flex-col h-full">
+          {/* 1. API Key & Model Selection */}
+          <section className="mb-6">
         <h2 className="flex items-center gap-2 font-['Public_Sans'] text-[15px] font-bold text-[#181b25] mb-2.5 px-1">
           <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#131b2e] text-white text-[11px] font-['JetBrains_Mono']">1</span>
           <span>AI 모델 선택 및 API 키 입력</span>
@@ -75,11 +79,11 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
             <span className="px-1.5 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] font-['JetBrains_Mono'] text-[10px] font-bold ml-1">필수</span>
           )}
         </h2>
-        <div className="flex flex-wrap items-center gap-3 p-3.5 bg-white rounded-xl border border-[#e5e8f5] shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 p-3.5 bg-white rounded-xl border-2 border-[#181b25] shadow-sm">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-[#505f76]" />
             <select
-              className="bg-[#f1f3ff] border border-transparent focus:border-[#131b2e] rounded-lg px-2 py-1.5 text-[#181b25] font-['Public_Sans'] text-[13px] font-semibold outline-none cursor-pointer transition-colors"
+              className="bg-[#f1f3ff] border-2 border-[#181b25] focus:border-[#131b2e] rounded-lg px-2 py-1.5 text-[#181b25] font-['Public_Sans'] text-[13px] font-semibold outline-none cursor-pointer transition-colors"
               value={project.aiModel}
               onChange={(e) => onUpdateProject({ aiModel: e.target.value })}
             >
@@ -93,7 +97,7 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
             <input
               type="password"
               placeholder="API 키 입력 (sk-...)"
-              className="w-full bg-[#f1f3ff] border border-transparent focus:border-[#131b2e] rounded-lg px-3 py-1.5 text-[#181b25] font-['JetBrains_Mono'] text-[13px] outline-none transition-all"
+              className="w-full bg-[#f1f3ff] border-2 border-[#181b25] focus:border-[#131b2e] rounded-lg px-3 py-1.5 text-[#181b25] font-['JetBrains_Mono'] text-[13px] outline-none transition-all"
               value={project.apiKey || ''}
               onChange={(e) => {
                 const val = e.target.value;
@@ -167,10 +171,9 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
             <span className="px-1.5 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] font-['JetBrains_Mono'] text-[10px] font-bold ml-1">필수</span>
           )}
         </h2>
-        <div className="p-4 bg-white rounded-xl border border-[#e5e8f5] shadow-sm space-y-4">
+        <div className="p-4 bg-white rounded-xl border-2 border-[#181b25] shadow-sm h-[100px] flex flex-col">
           <textarea
-            className="w-full bg-transparent text-[#181b25] font-['IBM_Plex_Serif'] text-[24px] font-bold leading-snug outline-none border-b-2 border-[#e5e8f5] focus:border-[#131b2e] pb-2 resize-none transition-all placeholder:text-[#bec6e0]"
-            rows={2}
+            className="w-full flex-1 bg-transparent text-[#181b25] font-['IBM_Plex_Serif'] text-[16px] font-semibold leading-snug outline-none border-b-2 border-[#e5e8f5] focus:border-[#131b2e] pb-2 resize-none transition-all placeholder:text-[#bec6e0]"
             placeholder="발명의 명칭을 입력하세요..."
             value={project.title}
             onChange={(e) => onUpdateProject({ title: e.target.value })}
@@ -200,15 +203,14 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
           <span className="font-['JetBrains_Mono'] text-[11px] text-[#505f76] hidden sm:block">특허법 제42조 대응</span>
         </div>
         <textarea
-          className="w-full p-4 rounded-xl bg-white text-[#181b25] font-['Public_Sans'] text-[13px] leading-relaxed outline-none border border-[#e5e8f5] focus:border-[#131b2e] focus:ring-1 focus:ring-[#131b2e] resize-none transition-all shadow-sm"
-          rows={3}
+          className="w-full h-[142px] p-4 rounded-xl bg-white text-[#181b25] font-['Public_Sans'] text-[13px] leading-relaxed outline-none border-2 border-[#181b25] focus:border-[#131b2e] focus:ring-1 focus:ring-[#131b2e] resize-none transition-all shadow-sm"
           value={project.problemPurpose}
           onChange={(e) => onUpdateProject({ problemPurpose: e.target.value })}
         />
       </section>
 
       {/* 4. Tech Field */}
-      <section className="mb-6">
+      <section className="mb-6 flex flex-col flex-1">
         <h2 className="flex items-center gap-2 font-['Public_Sans'] text-[15px] font-bold text-[#181b25] mb-2.5 px-1">
           <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#131b2e] text-white text-[11px] font-['JetBrains_Mono']">4</span>
           <span>기술 분야 및 적용 대상 / 용도</span>
@@ -219,8 +221,7 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
           )}
         </h2>
         <textarea
-          className="w-full p-4 rounded-xl bg-white text-[#181b25] font-['Public_Sans'] text-[13px] leading-relaxed outline-none border border-[#e5e8f5] focus:border-[#131b2e] focus:ring-1 focus:ring-[#131b2e] resize-none transition-all shadow-sm"
-          rows={2}
+          className="w-full flex-1 min-h-[160px] p-4 rounded-xl bg-white text-[#181b25] font-['Public_Sans'] text-[13px] leading-relaxed outline-none border-2 border-[#181b25] focus:border-[#131b2e] focus:ring-1 focus:ring-[#131b2e] resize-none transition-all shadow-sm"
           value={project.techField}
           onChange={(e) => onUpdateProject({ techField: e.target.value })}
           onKeyDown={(e) => {
@@ -232,17 +233,20 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
           }}
         />
       </section>
+        </div>
 
-      {/* 5. Optional Advanced Controls */}
-      <section className="mb-6">
+        {/* Right Column: Advanced & AI */}
+        <div className="flex flex-col">
+          {/* 5. Optional Advanced Controls */}
+          <section className="mb-6">
         <div className="flex items-center justify-between px-1 mb-2.5">
           <h2 className="flex items-center gap-2 font-['Public_Sans'] text-[15px] font-bold text-[#181b25]">
             <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#131b2e] text-white text-[11px] font-['JetBrains_Mono']">5</span>
             <span>명세서 정밀 제어 요소</span>
-            <span className="px-1.5 py-0.5 rounded bg-[#dfe2ef] text-[#505f76] font-['JetBrains_Mono'] text-[10px] font-medium ml-1">선택</span>
+            <span className="px-2 py-0.5 rounded-full bg-[#f1f3ff] border border-[#131b2e]/30 text-[#131b2e] font-['JetBrains_Mono'] text-[10px] font-bold ml-1 shadow-sm">선택</span>
           </h2>
         </div>
-        <div className="bg-white rounded-xl border border-[#e5e8f5] shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border-2 border-[#181b25] shadow-sm overflow-hidden">
           <button
             type="button"
             onClick={() => setIsAccordionOpen(!isAccordionOpen)}
@@ -270,7 +274,7 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
                   </label>
                   <span className="font-['JetBrains_Mono'] text-[10px] text-[#505f76]">발명의 설명 자동 매핑</span>
                 </div>
-                <div className="p-1 rounded-lg bg-[#f1f3ff]">
+                <div className="p-1 rounded-lg bg-[#f1f3ff] border-2 border-[#181b25]">
                   <textarea
                     className="w-full p-2 bg-transparent text-[#181b25] font-['JetBrains_Mono'] text-[12px] outline-none resize-none"
                     rows={2}
@@ -286,7 +290,7 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 rounded-lg bg-[#f1f3ff] text-[#181b25] font-['Public_Sans'] text-[13px] outline-none focus:bg-white border border-transparent focus:border-[#131b2e] transition-all"
+                  className="w-full px-3 py-2 rounded-lg bg-[#f1f3ff] text-[#181b25] font-['Public_Sans'] text-[13px] outline-none focus:bg-white border-2 border-[#181b25] focus:border-[#131b2e] transition-all"
                   value={project.priorArt}
                   onChange={(e) => onUpdateProject({ priorArt: e.target.value })}
                 />
@@ -302,10 +306,10 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
           <h2 className="flex items-center gap-2 font-['Public_Sans'] text-[15px] font-bold text-[#181b25]">
             <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#131b2e] text-white text-[11px] font-['JetBrains_Mono']">6</span>
             <span>AI 기술 질문 보강</span>
-            <span className="px-1.5 py-0.5 rounded bg-[#dfe2ef] text-[#505f76] font-['JetBrains_Mono'] text-[10px] font-medium ml-1">선택</span>
+            <span className="px-2 py-0.5 rounded-full bg-[#f1f3ff] border border-[#131b2e]/30 text-[#131b2e] font-['JetBrains_Mono'] text-[10px] font-bold ml-1 shadow-sm">선택</span>
           </h2>
         </div>
-        <div className="relative p-4.5 bg-gradient-to-br from-[#131b2e] via-[#232a3d] to-[#181b25] text-white rounded-xl shadow-lg overflow-hidden border border-[#2c303a]">
+        <div className="relative p-4.5 bg-gradient-to-br from-[#131b2e] via-[#232a3d] to-[#181b25] text-white rounded-xl shadow-lg overflow-hidden border-2 border-[#181b25]">
           <div className="absolute -right-4 -bottom-6 text-white/5 pointer-events-none select-none">
             <BrainCircuit className="w-40 h-40" />
           </div>
@@ -344,7 +348,7 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
               <div className="mt-2">
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 rounded bg-[#f1f3ff] text-[#181b25] font-['Public_Sans'] text-[12px] outline-none focus:bg-white border border-[#dfe2ef] focus:border-[#131b2e]"
+                  className="w-full px-2.5 py-1.5 rounded bg-[#f1f3ff] text-[#181b25] font-['Public_Sans'] text-[12px] outline-none focus:bg-white border-2 border-[#181b25] focus:border-[#131b2e]"
                   placeholder="답변을 입력하세요..."
                   value={project.q1Answer}
                   onChange={(e) => onUpdateProject({ q1Answer: e.target.value })}
@@ -378,7 +382,7 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
               <div className="mt-2">
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 rounded bg-[#f1f3ff] text-[#181b25] font-['Public_Sans'] text-[12px] outline-none focus:bg-white border border-[#dfe2ef] focus:border-[#131b2e]"
+                  className="w-full px-2.5 py-1.5 rounded bg-[#f1f3ff] text-[#181b25] font-['Public_Sans'] text-[12px] outline-none focus:bg-white border-2 border-[#181b25] focus:border-[#131b2e]"
                   placeholder="직접 추가 세부사항 입력..."
                   value={project.q2Custom}
                   onChange={(e) => onUpdateProject({ q2Custom: e.target.value })}
@@ -388,14 +392,16 @@ export const InputWorkspace: React.FC<InputWorkspaceProps> = ({
           </div>
         </div>
       </section>
+        </div>
+      </div>
 
       {/* Procedural Action Bar */}
       <div className="pt-2">
-        <div className="p-2 bg-white/95 backdrop-blur-xl border border-[#e5e8f5] rounded-xl shadow-lg flex items-center justify-center">
+        <div className="p-3 bg-white/95 backdrop-blur-xl border border-[#e5e8f5] rounded-xl shadow-lg flex items-center justify-center">
           <button
             type="button"
             onClick={onStartPipeline}
-            className="w-full px-4 py-3 rounded-lg bg-[#181b25] text-white font-['Public_Sans'] text-[14px] font-semibold hover:bg-[#2c303a] transition-all flex items-center justify-center gap-2 shadow-md"
+            className="w-full px-4 py-8 rounded-xl bg-[#181b25] text-white font-['Public_Sans'] text-[18px] font-bold hover:bg-[#2c303a] transition-all flex items-center justify-center gap-2 shadow-md"
           >
             <span className="w-2 h-2 rounded-full bg-[#4edea3] animate-pulse"></span>
             <span>특허 초안 생성 파이프라인 시작</span>

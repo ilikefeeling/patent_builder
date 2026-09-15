@@ -50,50 +50,50 @@ export const LiveGenerationPipeline: React.FC<LiveGenerationPipelineProps> = ({
     return () => clearInterval(interval);
   }, [isPaused]);
 
-  // Token streaming simulation (Step 3)
+  // Token streaming simulation (Step 3) - Optimized for Turbo Streaming
   useEffect(() => {
     if (isPaused || currentStep !== 3) return;
     const interval = setInterval(() => {
       setStreamIndex((prev) => {
         if (prev < extraTokens.length) {
           setProgressPercent((p) => {
-            const nextP = Math.min(100, p + 6);
+            const nextP = Math.min(100, p + 15);
             if (nextP === 100 || prev === extraTokens.length - 1) {
               setTimeout(() => {
                 setProgressPercent(100);
                 setCurrentStep(4);
-              }, 1000);
+              }, 400);
             }
             return nextP;
           });
           return prev + 1;
         } else {
           setProgressPercent(100);
-          setTimeout(() => setCurrentStep(4), 500);
+          setTimeout(() => setCurrentStep(4), 200);
         }
         return prev;
       });
-    }, 1500);
+    }, 150); // Speed up from 1500ms to 150ms
     return () => clearInterval(interval);
   }, [isPaused, currentStep]);
 
-  // Step 4 progress simulation
+  // Step 4 progress simulation - Optimized
   useEffect(() => {
     if (isPaused || currentStep !== 4) return;
     const interval = setInterval(() => {
       setStep4Progress((prev) => {
-        const next = Math.min(100, prev + 15);
+        const next = Math.min(100, prev + 25);
         if (next === 100) {
           setTimeout(() => {
             onShowToast('도면 렌더링이 완료되었습니다.', 'success');
             setCurrentStep(5);
             setIsPaused(true);
-          }, 500);
+          }, 300);
           clearInterval(interval);
         }
         return next;
       });
-    }, 1000);
+    }, 200); // Speed up from 1000ms to 200ms
     return () => clearInterval(interval);
   }, [isPaused, currentStep]);
 
@@ -118,7 +118,7 @@ export const LiveGenerationPipeline: React.FC<LiveGenerationPipelineProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full px-4 pt-4 pb-36 space-y-4 max-w-2xl mx-auto">
+    <div className="flex flex-col w-full px-4 md:px-8 xl:px-12 pt-4 pb-36 md:pb-12 space-y-4 max-w-[1600px] 2xl:max-w-[1800px] mx-auto">
       {/* Top Status Banner */}
       <div className="p-4 bg-[#ebedfb] rounded-xl border border-[#dfe2ef] flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3 min-w-0">
@@ -324,8 +324,8 @@ export const LiveGenerationPipeline: React.FC<LiveGenerationPipelineProps> = ({
             </span>
           </div>
           <div className="flex items-center gap-2 font-['JetBrains_Mono'] text-[11px] text-[#505f76]">
-            <span className="px-1.5 py-0.5 rounded bg-white font-semibold text-[#181b25]">
-              42 tok/s
+            <span className="px-1.5 py-0.5 rounded bg-gradient-to-r from-[#ff4d4d] to-[#f9cb28] text-white font-bold animate-pulse">
+              🚀 380 tok/s (Turbo)
             </span>
             <span>•</span>
             <span>진행: {elapsedSeconds.toFixed(1)}s</span>

@@ -110,7 +110,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf9ff] text-[#181b25] flex flex-col font-['Public_Sans'] selection:bg-[#d0e1fb] selection:text-[#0b1c30]">
+    <div className="min-h-screen bg-[#faf9ff] text-[#181b25] flex flex-col md:flex-row font-['Public_Sans'] selection:bg-[#d0e1fb] selection:text-[#0b1c30]">
       {/* Universal Header */}
       <Header
         onProfileClick={() =>
@@ -119,7 +119,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full pt-16 pb-20">
+      <main className="flex-1 w-full pt-16 pb-20 md:pb-6 md:pl-64">
         {currentTab === 'input' && (
           <InputWorkspace
             project={project}

@@ -61,7 +61,7 @@ export const ExportHistory: React.FC<ExportHistoryProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full px-4 pt-4 pb-36 space-y-4 max-w-2xl mx-auto">
+    <div className="flex flex-col w-full px-4 md:px-8 xl:px-12 pt-4 pb-36 md:pb-12 space-y-4 max-w-[1600px] 2xl:max-w-[1800px] mx-auto">
       {/* Top Export Summary Card */}
       <section className="flex flex-col rounded-xl bg-white p-4 border border-[#e5e8f5] shadow-sm relative overflow-hidden">
         <div className="flex items-start justify-between gap-3">
