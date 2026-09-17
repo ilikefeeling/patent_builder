@@ -10,6 +10,9 @@ export interface PatentProject {
   lastSavedText: string;
   problemPurpose: string;
   techField: string;
+  referenceNumerals: string;
+  similarPatentNo?: string;
+  differentiation?: string;
   keyComponents: string;
   priorArt: string;
   q1Answer: string;
@@ -18,6 +21,7 @@ export interface PatentProject {
   isClaim2Fixed: boolean;
   aiModel: string;
   apiKey: string;
+  generatedSpec?: string;
 }
 
 export interface DrawingItem {

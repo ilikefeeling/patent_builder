@@ -30,13 +30,16 @@ export default function App() {
     lastSavedText: '방금 전',
     problemPurpose: '',
     techField: '',
+    referenceNumerals: '',
+    similarPatentNo: '',
+    differentiation: '',
     keyComponents: '',
     priorArt: '',
     q1Answer: '',
     q2Selected: '',
     q2Custom: '',
     isClaim2Fixed: false,
-    aiModel: 'Claude 3.5 Sonnet (Pro)',
+    aiModel: 'Gemini 3.8 Flash (최신 고성능/자동연동)',
     apiKey: '',
   });
 
@@ -48,13 +51,17 @@ export default function App() {
 
   const showToast = (
     message: string,
-    type: 'success' | 'info' | 'warning' | 'download' = 'success'
+    type: 'success' | 'info' | 'warning' | 'download' = 'success',
+    options?: { sticky?: boolean }
   ) => {
     const id = Date.now().toString() + Math.random().toString(36).substring(2, 5);
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 2800);
+    setToasts((prev) => [...prev, { id, message, type, sticky: options?.sticky }]);
+    
+    if (!options?.sticky) {
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 2800);
+    }
   };
 
   const dismissToast = (id: string) => {
@@ -96,18 +103,26 @@ export default function App() {
       lastSavedText: '방금 전',
       problemPurpose: '',
       techField: '',
+      referenceNumerals: '',
       keyComponents: '',
       priorArt: '',
       q1Answer: '',
       q2Selected: '',
       q2Custom: '',
       isClaim2Fixed: false,
-      aiModel: 'Claude 3.5 Sonnet (Pro)',
+      aiModel: 'Gemini 3.8 Flash (최신 고성능/자동연동)',
       apiKey: project.apiKey,
     });
     setCurrentTab('input');
     showToast('새로운 특허 초안 작성을 시작합니다.', 'info');
   };
+
+  const handleUpdateGeneratedSpec = React.useCallback((spec: string) => {
+    setProject((prev) => {
+      if (prev.generatedSpec === spec) return prev;
+      return { ...prev, generatedSpec: spec };
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#faf9ff] text-[#181b25] flex flex-col md:flex-row font-['Public_Sans'] selection:bg-[#d0e1fb] selection:text-[#0b1c30]">
@@ -161,11 +176,17 @@ export default function App() {
 
         {currentTab === 'stream' && (
           <LiveGenerationPipeline
+            project={project}
+            onGoBackToInput={() => {
+              setCurrentTab('input');
+              showToast('1단계: 기본 정보 입력으로 돌아왔습니다.', 'info');
+            }}
             onGoToEditor={() => {
               setCurrentTab('editor');
               showToast('청구항 실시간 검증 에디터로 이동했습니다.', 'info');
             }}
             onShowToast={showToast}
+            onUpdateGeneratedSpec={handleUpdateGeneratedSpec}
           />
         )}
 
@@ -173,6 +194,10 @@ export default function App() {
           <SmartEditorValidation
             project={project}
             onUpdateProject={handleUpdateProject}
+            onGoBackToStream={() => {
+              setCurrentTab('stream');
+              showToast('실시간 생성 파이프라인으로 이동했습니다.', 'info');
+            }}
             onGoToExport={() => {
               setCurrentTab('export');
               showToast('검토 완료: 공식 출원 서식 내보내기로 이동했습니다.', 'success');
@@ -188,6 +213,8 @@ export default function App() {
             project={project}
             onOpenDiff={() => setIsDiffOpen(true)}
             onOpenConsult={() => setIsConsultOpen(true)}
+            onOpenDrawing={() => setIsDrawingOpen(true)}
+            onGoToEditor={() => setCurrentTab('editor')}
             onRestoreVersion={handleRestoreVersion}
             onResetProject={handleResetProject}
             onShowToast={showToast}
@@ -208,6 +235,8 @@ export default function App() {
       <DrawingModal
         isOpen={isDrawingOpen}
         onClose={() => setIsDrawingOpen(false)}
+        project={project}
+        onUpdateProject={handleUpdateProject}
         onShowToast={showToast}
       />
 

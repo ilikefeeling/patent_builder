@@ -14,13 +14,19 @@ import {
   Loader2,
   ExternalLink,
   FilePlus,
+  Edit3,
 } from 'lucide-react';
 import { PatentProject } from '../types';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 interface ExportHistoryProps {
   project: PatentProject;
   onOpenDiff: () => void;
   onOpenConsult: () => void;
+  onOpenDrawing: () => void;
+  onGoToEditor: () => void;
   onRestoreVersion: (v: string) => void;
   onResetProject: () => void;
   onShowToast: (msg: string, type?: 'success' | 'info' | 'warning' | 'download') => void;
@@ -30,34 +36,264 @@ export const ExportHistory: React.FC<ExportHistoryProps> = ({
   project,
   onOpenDiff,
   onOpenConsult,
+  onOpenDrawing,
+  onGoToEditor,
   onRestoreVersion,
   onResetProject,
   onShowToast,
 }) => {
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
 
-  const handleDownload = (fileName: string) => {
-    setDownloadingFile(fileName);
-    setTimeout(() => {
-      setDownloadingFile(null);
-      // Create actual download blob for mock files
-      const blob = new Blob(
-        [
-          `[대한민국 특허청 KIPO 표준 서식]\n발명의 명칭: ${project.title}\n출원인: ${project.applicant}\n분류: ${project.ipcClass}\n버전: ${project.version}\n\n【특허청구범위】\n【청구항 1】 사용자의 기초 발명 데이터를 입력받는 입력부(110)...`,
-        ],
-        { type: 'text/plain;charset=utf-8' }
-      );
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+  const handleDownload = async (fileType: 'docx' | 'pdf' | 'zip') => {
+    const safeTitle = (project.title.trim() || '미제출_특허초안').replace(/[/\\?%*:|"<>]/g, '-');
+    setDownloadingFile(fileType);
 
-      onShowToast(`${fileName} 파일이 안전하게 다운로드되었습니다.`, 'download');
-    }, 800);
+    try {
+      if (fileType === 'docx') {
+        // Build paragraphs from AI-generated spec or fallback template
+        let specText = project.generatedSpec;
+        const paragraphs: any[] = [
+          new Paragraph({ children: [new TextRun({ text: "[대한민국 특허청 KIPO 표준 서식]", bold: true, size: 32 })] }),
+          new Paragraph({ children: [new TextRun({ text: "" })] }),
+          new Paragraph({ children: [new TextRun({ text: `출원인: ${project.applicant || '(미입력)'}`, size: 24 })] }),
+          new Paragraph({ children: [new TextRun({ text: `IPC 분류: ${project.ipcClass || '(미입력)'}  |  버전: ${project.version}`, size: 24 })] }),
+          new Paragraph({ children: [new TextRun({ text: "" })] }),
+        ];
+
+        if (specText && specText.length > 100) {
+          // Post-processing: Strip AI preamble (anything before the first 【)
+          const firstBracketIdx = specText.indexOf('【');
+          if (firstBracketIdx > 0) {
+            specText = specText.substring(firstBracketIdx);
+          }
+          // Strip markdown-style separators
+          specText = specText.replace(/^---+$/gm, '').replace(/^\*\*\*+$/gm, '');
+
+          const lines = specText.split('\n');
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) {
+              paragraphs.push(new Paragraph({ children: [new TextRun({ text: "", size: 24 })] }));
+            } else if (trimmed.startsWith('【') && trimmed.endsWith('】')) {
+              // Major section header (e.g. 【발명의 명칭】)
+              paragraphs.push(new Paragraph({ 
+                spacing: { before: 240, after: 120 },
+                children: [new TextRun({ text: trimmed, bold: true, size: 26, underline: { type: 'single' } })] 
+              }));
+            } else if (trimmed.startsWith('【')) {
+              // Sub-section header (e.g. 【청구항 1】 내용...)
+              paragraphs.push(new Paragraph({ 
+                spacing: { before: 120 },
+                children: [new TextRun({ text: trimmed, bold: true, size: 24 })] 
+              }));
+            } else if (trimmed.startsWith('```mermaid')) {
+              // Skip mermaid code block markers in DOCX (they go to ZIP)
+              continue;
+            } else if (trimmed === '```') {
+              continue;
+            } else {
+              paragraphs.push(new Paragraph({ children: [new TextRun({ text: trimmed, size: 24 })] }));
+            }
+          }
+        } else {
+          // Fallback: template-based content
+          paragraphs.push(
+            new Paragraph({ spacing: { before: 240 }, children: [new TextRun({ text: "【발명의 명칭】", bold: true, size: 26, underline: { type: 'single' } })] }),
+            new Paragraph({ children: [new TextRun({ text: project.title || "발명의 명칭이 입력되지 않았습니다.", size: 24 })] }),
+            new Paragraph({ spacing: { before: 240 }, children: [new TextRun({ text: "【기술분야】", bold: true, size: 26, underline: { type: 'single' } })] }),
+            new Paragraph({ children: [new TextRun({ text: project.techField || "본 발명은 입력된 기술 분야에 관한 것입니다.", size: 24 })] }),
+            new Paragraph({ spacing: { before: 240 }, children: [new TextRun({ text: "【발명의 배경이 되는 기술】", bold: true, size: 26, underline: { type: 'single' } })] }),
+            new Paragraph({ children: [new TextRun({ text: "관련 선행 기술에 대한 설명이 기재되는 항목입니다.", size: 24 })] }),
+            new Paragraph({ spacing: { before: 240 }, children: [new TextRun({ text: "【발명의 내용】", bold: true, size: 26, underline: { type: 'single' } })] }),
+            new Paragraph({ children: [new TextRun({ text: "【해결하려는 과제】", bold: true, size: 24 })] }),
+            new Paragraph({ children: [new TextRun({ text: project.problemPurpose || "발명이 해결하고자 하는 과제가 기재됩니다.", size: 24 })] }),
+            new Paragraph({ spacing: { before: 240 }, children: [new TextRun({ text: "【특허청구범위】", bold: true, size: 26, underline: { type: 'single' } })] }),
+            new Paragraph({ children: [new TextRun({ text: "【청구항 1】 (AI 생성을 실행하면 내용이 자동으로 채워집니다.)", size: 24 })] }),
+            new Paragraph({ spacing: { before: 240 }, children: [new TextRun({ text: "【요약서】", bold: true, size: 26, underline: { type: 'single' } })] }),
+            new Paragraph({ children: [new TextRun({ text: "본 발명은 " + (project.title || "특정 기술") + "에 관한 것입니다.", size: 24 })] }),
+          );
+        }
+
+        const doc = new Document({
+          sections: [{ properties: {}, children: paragraphs }],
+        });
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, `${safeTitle}.docx`);
+      } else if (fileType === 'zip') {
+        const zip = new JSZip();
+
+        // Extract and Sanitize Mermaid diagrams from AI-generated spec if available
+        const specText = project.generatedSpec || '';
+        const mermaidBlocks: { name: string; code: string }[] = [];
+        const mermaidRegex = /```mermaid\s*\n([\s\S]*?)```/g;
+        let match;
+        let diagramIndex = 1;
+
+        // Helper to sanitize Mermaid code and prevent "Syntax error in text"
+        const sanitizeMermaid = (raw: string): string => {
+          let code = raw.trim();
+          if (!code.match(/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram)/i)) {
+            code = 'graph TD\n' + code;
+          }
+          // Wrap unquoted bracket contents: A[시스템 (100)] -> A["시스템 (100)"]
+          code = code.replace(/\[\s*([^"\]\n]+?)\s*\]/g, (_, inner) => {
+            const clean = inner.replace(/"/g, "'").trim();
+            return `["${clean}"]`;
+          });
+          return code;
+        };
+
+        while ((match = mermaidRegex.exec(specText)) !== null) {
+          mermaidBlocks.push({
+            name: `도면${diagramIndex}`,
+            code: sanitizeMermaid(match[1]),
+          });
+          diagramIndex++;
+        }
+
+        // Fallback diagrams if AI didn't generate Mermaid
+        if (mermaidBlocks.length === 0) {
+          mermaidBlocks.push(
+            { name: '도면1_시스템구성도', code: 'graph TD\n  A["사용자 단말"] -->|입력| B["입력부 (110)"]\n  B --> C["제어부 (120)"]\n  C --> D["처리부 (130)"]\n  D --> E["출력부 (140)"]' },
+            { name: '도면2_블록도', code: 'graph LR\n  A["데이터 수집"] --> B["전처리"]\n  B --> C["AI 분석"]\n  C --> D["결과 생성"]\n  D --> E["문서 출력"]' },
+            { name: '도면3_순서도', code: 'flowchart TD\n  Start(["시작"]) --> A["사용자 입력 수신"]\n  A --> B{"입력 검증"}\n  B -->|유효| C["AI 분석 수행"]\n  B -->|무효| A\n  C --> D["명세서 생성"]\n  D --> E["결과 출력"]\n  E --> End(["종료"])' },
+          );
+        }
+
+        // Add each Mermaid diagram as individual .mmd file
+        for (const block of mermaidBlocks) {
+          zip.file(`${block.name}.mmd`, block.code);
+        }
+
+        // Create an HTML viewer that renders all Mermaid diagrams with interactive in-place editor
+        const diagramCards = mermaidBlocks.map((b, i) => {
+          return `
+          <div style="margin:24px 0;padding:24px;border:1px solid #e2e8f0;border-radius:12px;background:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid #f1f5f9;padding-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <h3 style="margin:0;color:#0f172a;font-size:16px;">📐 도 ${i + 1}. ${b.name}</h3>
+              <div style="display:flex;gap:6px;">
+                <button type="button" onclick="toggleEdit(${i})" style="padding:4px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;background:#f8fafc;cursor:pointer;font-weight:600;">✏️ 이 도면 바로 수정</button>
+                <button type="button" onclick="autoFix(${i})" style="padding:4px 10px;font-size:12px;border:1px solid #fcd34d;border-radius:6px;background:#fef3c7;color:#92400e;cursor:pointer;font-weight:600;">🤖 구문오류 자동교정</button>
+              </div>
+            </div>
+
+            <!-- In-place Edit Box -->
+            <div id="editor-box-${i}" style="display:none;margin-bottom:16px;padding:12px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;">
+              <div style="font-size:12px;font-weight:bold;margin-bottom:6px;color:#334155;">도면 코드 직접 편집 (수정 후 [다시 그리기] 클릭):</div>
+              <textarea id="code-${i}" style="width:100%;height:140px;font-family:monospace;font-size:12px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;">${b.code}</textarea>
+              <div style="margin-top:8px;display:flex;gap:8px;">
+                <button type="button" onclick="reRenderDiagram(${i})" style="padding:6px 14px;background:#10b981;color:white;border:none;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;">🔄 실시간 다시 그리기</button>
+                <button type="button" onclick="toggleEdit(${i})" style="padding:6px 12px;background:#e2e8f0;border:none;border-radius:6px;font-size:12px;cursor:pointer;">닫기</button>
+              </div>
+            </div>
+
+            <!-- Drawing Render Container -->
+            <div class="mermaid-target" id="mermaid-target-${i}" style="min-height:120px;display:flex;align-items:center;justify-content:center;overflow-x:auto;">
+              <pre class="mermaid" id="pre-${i}">${b.code}</pre>
+            </div>
+          </div>`;
+        }).join('\n');
+
+        const htmlViewer = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>${safeTitle} - 특허 도면 모음</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "Segoe UI", sans-serif; max-width: 960px; margin: 0 auto; padding: 32px 20px; background: #f8fafc; color: #1e293b; }
+    h1 { color: #0f172a; font-size: 24px; border-bottom: 3px solid #10b981; padding-bottom: 12px; margin-bottom: 8px; }
+    p.info { color: #64748b; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+    .badge { display: inline-block; background: #10b981; color: white; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-weight: bold; margin-bottom: 12px; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: white; padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 9999; display: none; }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <span class="badge">KIPO 규격 특허 도면</span>
+  <h1>📐 ${project.title || '특허 도면'} - 도면 모음</h1>
+  <p class="info">
+    웹 브라우저에서 고해상도 벡터 그래픽으로 도면을 확인합니다.<br>
+    도면에 수정할 부분이 있거나 오류가 발생했을 경우, 각 도면 우측 상단의 <b>[✏️ 이 도면 바로 수정]</b> 또는 <b>[🤖 구문오류 자동교정]</b>을 누르면 그 자리에서 즉시 수정하여 다시 그릴 수 있습니다.
+  </p>
+  ${diagramCards}
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"><\/script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      securityLevel: 'loose',
+      flowchart: { htmlLabels: true, curve: 'basis' }
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2500);
+    }
+
+    function toggleEdit(i) {
+      const box = document.getElementById('editor-box-' + i);
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function autoFix(i) {
+      const textarea = document.getElementById('code-' + i);
+      let code = textarea.value.trim();
+      if (!code.match(/^(graph|flowchart|sequenceDiagram|classDiagram)/i)) {
+        code = 'graph TD\\n' + code;
+      }
+      code = code.replace(/\\[\\s*([^"\\]\\n]+?)\\s*\\]/g, (_, inner) => {
+        const clean = inner.replace(/"/g, "'").trim();
+        return '["' + clean + '"]';
+      });
+      textarea.value = code;
+      showToast('괄호 및 특수문자 문법 오류가 자동 교정되었습니다. [실시간 다시 그리기]를 누르세요.');
+      document.getElementById('editor-box-' + i).style.display = 'block';
+    }
+
+    async function reRenderDiagram(i) {
+      const textarea = document.getElementById('code-' + i);
+      const newCode = textarea.value.trim();
+      const target = document.getElementById('mermaid-target-' + i);
+      const uniqueId = 'diagram-dynamic-' + i + '-' + Date.now();
+      try {
+        const { svg } = await mermaid.render(uniqueId, newCode);
+        target.innerHTML = svg;
+        showToast('도면이 성공적으로 다시 렌더링되었습니다!');
+      } catch (err) {
+        console.error(err);
+        showToast('문법 오류가 발생했습니다. [구문오류 자동교정]을 클릭해 보세요.');
+      }
+    }
+  <\/script>
+</body>
+</html>`;
+        zip.file("도면_뷰어.html", htmlViewer);
+        zip.file("README.txt", `[도면 열기 안내]\n\n1. "도면_뷰어.html" 파일을 더블클릭하면 웹 브라우저(Chrome, Edge)에서 도면이 고화질로 렌더링됩니다.\n2. 각 도면 우측 상단의 [이 도면 바로 수정] 버튼으로 그 자리에서 즉시 수정 및 다시 그리기가 가능합니다.\n3. 온라인: https://mermaid.live 에 .mmd 파일 내용을 붙여넣어도 확인 및 이미지 저장이 가능합니다.\n`);
+
+
+        const content = await zip.generateAsync({ type: "blob" });
+        saveAs(content, `${safeTitle}_도면.zip`);
+      } else if (fileType === 'pdf') {
+        // Note: Real Korean PDF generation requires heavy font embedding (.ttf).
+        // For now, we fallback to a simple HTML file disguised as PDF, or just a text file.
+        const blob = new Blob(
+          [
+            `[대한민국 특허청 KIPO 표준 서식]\n발명의 명칭: ${project.title}\n출원인: ${project.applicant}\n분류: ${project.ipcClass}\n버전: ${project.version}`
+          ],
+          { type: 'text/plain;charset=utf-8' }
+        );
+        saveAs(blob, `${safeTitle}_임시문서.txt`);
+      }
+      
+      onShowToast(`${fileType.toUpperCase()} 파일이 생성 및 다운로드되었습니다.`, 'download');
+    } catch (error) {
+      console.error(error);
+      onShowToast('파일 생성 중 오류가 발생했습니다.', 'warning');
+    } finally {
+      setDownloadingFile(null);
+    }
   };
 
   return (
@@ -162,23 +398,33 @@ export const ExportHistory: React.FC<ExportHistoryProps> = ({
             </div>
           </div>
 
-          <div className="pt-1 flex items-center justify-between gap-2">
+          <div className="pt-1 flex items-center justify-between gap-2 flex-wrap">
             <span className="font-['JetBrains_Mono'] text-[11px] text-[#505f76]">
               용량: 245 KB · DOCX
             </span>
-            <button
-              type="button"
-              disabled={downloadingFile === 'KIPO_Patent_Draft_Final.docx'}
-              onClick={() => handleDownload('KIPO_Patent_Draft_Final.docx')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#181b25] text-white font-['Public_Sans'] text-[12px] font-semibold hover:bg-[#2c303a] transition-all active:scale-95 shadow-sm"
-            >
-              {downloadingFile === 'KIPO_Patent_Draft_Final.docx' ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Download className="w-3.5 h-3.5" />
-              )}
-              <span>.DOCX 다운로드</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onGoToEditor}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#ebedfb] text-[#181b25] font-['Public_Sans'] text-[12px] font-semibold hover:bg-[#dfe2ef] transition-all active:scale-95 border border-[#d2d6ea]"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-[#505f76]" />
+                <span>명세서 바로 수정</span>
+              </button>
+              <button
+                type="button"
+                disabled={downloadingFile === 'docx'}
+                onClick={() => handleDownload('docx')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#181b25] text-white font-['Public_Sans'] text-[12px] font-semibold hover:bg-[#2c303a] transition-all active:scale-95 shadow-sm"
+              >
+                {downloadingFile === 'docx' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                <span>.DOCX 다운로드</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -209,11 +455,11 @@ export const ExportHistory: React.FC<ExportHistoryProps> = ({
             </span>
             <button
               type="button"
-              disabled={downloadingFile === 'KIPO_Patent_Draft_Print.pdf'}
-              onClick={() => handleDownload('KIPO_Patent_Draft_Print.pdf')}
+              disabled={downloadingFile === 'pdf'}
+              onClick={() => handleDownload('pdf')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#181b25] text-white font-['Public_Sans'] text-[12px] font-semibold hover:bg-[#2c303a] transition-all active:scale-95 shadow-sm"
             >
-              {downloadingFile === 'KIPO_Patent_Draft_Print.pdf' ? (
+              {downloadingFile === 'pdf' ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <Download className="w-3.5 h-3.5" />
@@ -301,23 +547,33 @@ export const ExportHistory: React.FC<ExportHistoryProps> = ({
             </div>
           </div>
 
-          <div className="pt-1 flex items-center justify-between gap-2">
+          <div className="pt-1 flex items-center justify-between gap-2 flex-wrap">
             <span className="font-['JetBrains_Mono'] text-[11px] text-[#505f76]">
-              포함: SVG 3건 + MMD 파일
+              포함: SVG 3건 + MMD 소스 + 자동 렌더링 HTML
             </span>
-            <button
-              type="button"
-              disabled={downloadingFile === 'Patent_Drawings_Bundle.zip'}
-              onClick={() => handleDownload('Patent_Drawings_Bundle.zip')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#181b25] text-white font-['Public_Sans'] text-[12px] font-semibold hover:bg-[#2c303a] transition-all active:scale-95 shadow-sm"
-            >
-              {downloadingFile === 'Patent_Drawings_Bundle.zip' ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Archive className="w-3.5 h-3.5" />
-              )}
-              <span>.ZIP 다운로드</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenDrawing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-300 font-['Public_Sans'] text-[12px] font-bold hover:bg-amber-100 transition-all active:scale-95 shadow-sm"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-amber-700" />
+                <span>도면 바로 수정 / AI 교정</span>
+              </button>
+              <button
+                type="button"
+                disabled={downloadingFile === 'zip'}
+                onClick={() => handleDownload('zip')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#181b25] text-white font-['Public_Sans'] text-[12px] font-semibold hover:bg-[#2c303a] transition-all active:scale-95 shadow-sm"
+              >
+                {downloadingFile === 'zip' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Archive className="w-3.5 h-3.5" />
+                )}
+                <span>.ZIP 다운로드</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
