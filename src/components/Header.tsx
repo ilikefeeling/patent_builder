@@ -1,10 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface HeaderProps {
   onProfileClick?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onProfileClick }) => {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 w-full md:left-64 md:w-[calc(100%-16rem)] z-40 bg-[#faf9ff]/85 backdrop-blur-xl border-b border-[#e5e8f5] shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
       <div className="max-w-[1600px] 2xl:max-w-[1800px] mx-auto h-16 px-4 md:px-8 xl:px-12 flex items-center justify-between gap-3">
@@ -31,6 +58,19 @@ export const Header: React.FC<HeaderProps> = ({ onProfileClick }) => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {isInstallable && (
+            <button
+              onClick={handleInstallClick}
+              className="px-3 py-1.5 rounded-full bg-[#181b25] text-white font-semibold text-[13px] hover:bg-[#2c3140] transition-colors shadow-sm flex items-center gap-1.5"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" x2="12" y1="15" y2="3" />
+              </svg>
+              앱 설치
+            </button>
+          )}
           <button
             onClick={onProfileClick}
             className="w-8 h-8 rounded-full ring-2 ring-[#e5e8f5] overflow-hidden hover:opacity-90 active:scale-95 transition-all focus:outline-none bg-[#dfe2ef] flex items-center justify-center"

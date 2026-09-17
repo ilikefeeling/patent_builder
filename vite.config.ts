@@ -2,10 +2,43 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(), 
+      tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.svg', 'apple-touch-icon.jpg', 'og-image.jpg'],
+        manifest: {
+          name: '특허초안 생성기 PRO',
+          short_name: '특허 PRO',
+          description: 'AI 기반 스마트 센서 IoT 특허 초안 자동 생성기',
+          theme_color: '#faf9ff',
+          background_color: '#faf9ff',
+          display: 'standalone',
+          icons: [
+            {
+              src: 'favicon.svg',
+              sizes: 'any',
+              type: 'image/svg+xml'
+            },
+            {
+              src: 'favicon.jpg',
+              sizes: '192x192',
+              type: 'image/jpeg'
+            },
+            {
+              src: 'favicon.jpg',
+              sizes: '512x512',
+              type: 'image/jpeg'
+            }
+          ]
+        }
+      })
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
