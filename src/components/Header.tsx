@@ -1,5 +1,4 @@
 import React from 'react';
-import { Gavel } from 'lucide-react';
 
 interface HeaderProps {
   onProfileClick?: () => void;
@@ -10,8 +9,8 @@ export const Header: React.FC<HeaderProps> = ({ onProfileClick }) => {
     <header className="fixed top-0 left-0 right-0 w-full md:left-64 md:w-[calc(100%-16rem)] z-40 bg-[#faf9ff]/85 backdrop-blur-xl border-b border-[#e5e8f5] shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
       <div className="max-w-[1600px] 2xl:max-w-[1800px] mx-auto h-16 px-4 md:px-8 xl:px-12 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#131b2e] text-white shrink-0 shadow-sm">
-            <Gavel className="w-4 h-4" />
+          <div className="flex items-center justify-center w-8 h-8 rounded-full shrink-0 shadow-sm overflow-hidden bg-white border border-[#e5e8f5]">
+            <img src="/favicon.svg" alt="KIPO Logo" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5">
